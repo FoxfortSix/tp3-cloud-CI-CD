@@ -1,33 +1,41 @@
 pipeline {
     agent any
     environment {
-        // GANTI 'username' dengan username Docker Hub Anda
-        DOCKER_HUB_USER = 'foxfortsix' 
-        BACKEND_IMAGE = "${DOCKER_HUB_USER}/backend-kantin:latest"
-        FRONTEND_IMAGE = "${DOCKER_HUB_USER}/frontend-kantin:latest"
+        // GANTI dengan Username Docker Hub Anda
+        DOCKER_USER = "foxfortsix"
+        // GANTI dengan URL Repo GitHub Anda
+        GIT_REPO_URL = "https://github.com/FoxfortSix/tp3-cloud-CI-CD.git"
     }
     stages {
-        stage('Clone Repository') {
+        stage('Checkout Code') {
             steps {
-                checkout scm
+                git branch: 'main', url: "${GIT_REPO_URL}"
             }
         }
-        stage('Build & Push Docker Images') {
+        stage('Build & Push Docker Image') {
             steps {
-                // Menggunakan 'sh' untuk Linux Environment di AKS
-                sh "docker build -t ${BACKEND_IMAGE} ./backend"
-                sh "docker build -t ${FRONTEND_IMAGE} ./frontend"
-                
-                // Pastikan Anda sudah login ke Docker Hub di Jenkins (via Credentials)
-                sh "docker push ${BACKEND_IMAGE}"
-                sh "docker push ${FRONTEND_IMAGE}"
+                // Menggunakan Credentials ID 'dockerhub-login' yang dibuat di Jenkins
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-login', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                    sh "docker build -t ${USER}/kantin-backend:latest ./backend"
+                    sh "docker build -t ${USER}/kantin-frontend:latest ./frontend"
+                    
+                    sh "echo ${PASS} | docker login -u ${USER} --password-stdin"
+                    sh "docker push ${USER}/kantin-backend:latest"
+                    sh "docker push ${USER}/kantin-frontend:latest"
+                }
             }
         }
-        stage('Deploy to AKS') {
+        stage('Deploy ke Azure AKS') {
             steps {
-                // Perintah apply ke cluster AKS
-                sh "kubectl apply -f kantin-k8s.yaml"
-                sh "kubectl apply -f kantin-ingress.yaml"
+                // Menggunakan Credentials ID 'aks-config' (file kubeconfig AKS)
+                withKubeConfig([credentialsId: 'aks-config']) {
+                    sh "kubectl apply -f kantin-k8s.yaml"
+                    sh "kubectl apply -f kantin-ingress.yaml"
+                    
+                    // Memastikan Pod terupdate dengan image terbaru
+                    sh "kubectl rollout restart deployment backend-kantin"
+                    sh "kubectl rollout restart deployment frontend-kantin"
+                }
             }
         }
     }
