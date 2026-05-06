@@ -16,7 +16,6 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-login', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
                     script {
-                        // Cek OS: Gunakan 'bat' untuk Windows, 'sh' untuk Linux
                         if (isUnix()) {
                             sh "docker build -t ${USER}/kantin-backend:latest ./backend"
                             sh "docker build -t ${USER}/kantin-frontend:latest ./frontend"
@@ -36,18 +35,16 @@ pipeline {
         }
         stage('Deploy ke Azure AKS') {
             steps {
-                withKubeConfig([credentialsId: 'aks-config']) {
+                // Menggunakan withCredentials tipe 'file' (pengganti withKubeConfig)
+                withCredentials([file(credentialsId: 'aks-config', variable: 'KUBECONFIG_FILE')]) {
                     script {
-                        if (isUnix()) {
-                            sh "kubectl apply -f kantin-k8s.yaml"
-                            sh "kubectl apply -f kantin-ingress.yaml"
-                            sh "kubectl rollout restart deployment backend-kantin"
-                            sh "kubectl rollout restart deployment frontend-kantin"
-                        } else {
-                            bat "kubectl apply -f kantin-k8s.yaml"
-                            bat "kubectl apply -f kantin-ingress.yaml"
-                            bat "kubectl rollout restart deployment backend-kantin"
-                            bat "kubectl rollout restart deployment frontend-kantin"
+                        def shellCmd = isUnix() ? 'sh' : 'bat'
+                        // Mengatur environment variable KUBECONFIG secara eksplisit untuk kubectl
+                        withEnv(["KUBECONFIG=${KUBECONFIG_FILE}"]) {
+                            ${shellCmd} "kubectl apply -f kantin-k8s.yaml"
+                            ${shellCmd} "kubectl apply -f kantin-ingress.yaml"
+                            ${shellCmd} "kubectl rollout restart deployment backend-kantin"
+                            ${shellCmd} "kubectl rollout restart deployment frontend-kantin"
                         }
                     }
                 }
