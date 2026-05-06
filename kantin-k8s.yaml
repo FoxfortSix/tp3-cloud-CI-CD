@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: backend-api
-        image: foxfortsix/kantin-backend:latest
+        image: blucordon/kantin-backend:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
@@ -57,7 +57,7 @@ spec:
     spec:
       containers:
       - name: frontend-ui
-        image: foxfortsix/kantin-frontend:latest
+        image: blucordon/kantin-frontend:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
