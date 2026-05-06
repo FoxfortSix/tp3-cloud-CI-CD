@@ -2,9 +2,9 @@ pipeline {
     agent any
     environment {
         // GANTI dengan Username Docker Hub Anda
-        DOCKER_USER = "foxfortsix"
+        DOCKER_USER = "blucordon"
         // GANTI dengan URL Repo GitHub Anda
-        GIT_REPO_URL = "https://github.com/FoxfortSix/tp3-cloud-CI-CD.git"
+        GIT_REPO_URL = "https://github.com/FoxfortSix/tp3-cloud-CI-CD"
     }
     stages {
         stage('Checkout Code') {
