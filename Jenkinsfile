@@ -1,8 +1,10 @@
 pipeline {
     agent any
     environment {
-        // Point Jenkins to your user's kubeconfig
-        KUBECONFIG = 'C:/Users/pinda/.kube/config'
+        // GANTI 'username' dengan username Docker Hub Anda
+        DOCKER_HUB_USER = 'foxfortsix' 
+        BACKEND_IMAGE = "${DOCKER_HUB_USER}/backend-kantin:latest"
+        FRONTEND_IMAGE = "${DOCKER_HUB_USER}/frontend-kantin:latest"
     }
     stages {
         stage('Clone Repository') {
@@ -10,18 +12,23 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build Docker Images') {
+        stage('Build & Push Docker Images') {
             steps {
-                // Building images with tags that match our K8s manifests
-                bat 'docker -H tcp://localhost:2375 build -t backend-kantin:latest ./backend'
-                bat 'docker -H tcp://localhost:2375 build -t frontend-kantin:latest ./frontend'
+                // Menggunakan 'sh' untuk Linux Environment di AKS
+                sh "docker build -t ${BACKEND_IMAGE} ./backend"
+                sh "docker build -t ${FRONTEND_IMAGE} ./frontend"
+                
+                // Pastikan Anda sudah login ke Docker Hub di Jenkins (via Credentials)
+                sh "docker push ${BACKEND_IMAGE}"
+                sh "docker push ${FRONTEND_IMAGE}"
             }
         }
-        stage('K8s Deployment Test') {
+        stage('Deploy to AKS') {
             steps {
-                // Testing Kubernetes manifests with the specified context
-                bat 'kubectl apply --dry-run=client -f kantin-k8s.yaml --context=docker-desktop'
+                // Perintah apply ke cluster AKS
+                sh "kubectl apply -f kantin-k8s.yaml"
+                sh "kubectl apply -f kantin-ingress.yaml"
             }
         }
     }
-}
+}

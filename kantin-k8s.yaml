@@ -14,19 +14,16 @@ spec:
     spec:
       containers:
       - name: backend-api
-        # GANTI 'username' dengan username Docker Hub Anda
-        image: backend-kantin:latest
-        imagePullPolicy: IfNotPresent
+        # Menggunakan image dari Docker Hub agar bisa ditarik oleh AKS
+        image: foxfortsix/backend-kantin:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
-
-        # BAGIAN IDENTITY INJECTION[cite: 2]
         env:
           - name: USER_NAME
             value: "Mochamad Azka Basria"
           - name: USER_NIM
-            value: "1234567"
-
+            value: "2405170"
 
 ---
 
@@ -61,12 +58,11 @@ spec:
     spec:
       containers:
       - name: frontend-ui
-        # GANTI 'username' dengan username Docker Hub Anda
-        image: frontend-kantin:latest
-        imagePullPolicy: IfNotPresent
+        # Menggunakan image dari Docker Hub agar bisa ditarik oleh AKS
+        image: foxfortsix/frontend-kantin:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
-
 
 ---
 
