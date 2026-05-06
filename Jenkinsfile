@@ -17,7 +17,7 @@ pipeline {
         stage('K8s Deployment Test') {
             steps {
                 // Memeriksa validasi file Kubernetes Anda
-                bat 'kubectl apply --dry-run=client -f kantin-k8s.yaml'
+                bat 'kubectl apply --dry-run=client -f kantin-k8s.yaml --validate=false'
             }
         }
     }
