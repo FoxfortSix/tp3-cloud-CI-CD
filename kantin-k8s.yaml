@@ -15,16 +15,18 @@ spec:
       containers:
       - name: backend-api
         # GANTI 'username' dengan username Docker Hub Anda
-        image: username/kantin-backend:latest
-        imagePullPolicy: Always
+        image: backend-kantin:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
+
         # BAGIAN IDENTITY INJECTION[cite: 2]
         env:
           - name: USER_NAME
             value: "Mochamad Azka Basria"
           - name: USER_NIM
-            value: "NIM_ANDA_DISINI"
+            value: "1234567"
+
 
 ---
 
@@ -60,10 +62,11 @@ spec:
       containers:
       - name: frontend-ui
         # GANTI 'username' dengan username Docker Hub Anda
-        image: username/kantin-frontend:latest
-        imagePullPolicy: Always
+        image: frontend-kantin:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
+
 
 ---
 
