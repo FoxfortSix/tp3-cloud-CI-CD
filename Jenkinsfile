@@ -14,27 +14,42 @@ pipeline {
         }
         stage('Build & Push Docker Image') {
             steps {
-                // Menggunakan Credentials ID 'dockerhub-login' yang dibuat di Jenkins
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-login', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                    sh "docker build -t ${USER}/kantin-backend:latest ./backend"
-                    sh "docker build -t ${USER}/kantin-frontend:latest ./frontend"
-                    
-                    sh "echo ${PASS} | docker login -u ${USER} --password-stdin"
-                    sh "docker push ${USER}/kantin-backend:latest"
-                    sh "docker push ${USER}/kantin-frontend:latest"
+                    script {
+                        // Cek OS: Gunakan 'bat' untuk Windows, 'sh' untuk Linux
+                        if (isUnix()) {
+                            sh "docker build -t ${USER}/kantin-backend:latest ./backend"
+                            sh "docker build -t ${USER}/kantin-frontend:latest ./frontend"
+                            sh "echo ${PASS} | docker login -u ${USER} --password-stdin"
+                            sh "docker push ${USER}/kantin-backend:latest"
+                            sh "docker push ${USER}/kantin-frontend:latest"
+                        } else {
+                            bat "docker build -t %USER%/kantin-backend:latest ./backend"
+                            bat "docker build -t %USER%/kantin-frontend:latest ./frontend"
+                            bat "docker login -u %USER% -p %PASS%"
+                            bat "docker push %USER%/kantin-backend:latest"
+                            bat "docker push %USER%/kantin-frontend:latest"
+                        }
+                    }
                 }
             }
         }
         stage('Deploy ke Azure AKS') {
             steps {
-                // Menggunakan Credentials ID 'aks-config' (file kubeconfig AKS)
                 withKubeConfig([credentialsId: 'aks-config']) {
-                    sh "kubectl apply -f kantin-k8s.yaml"
-                    sh "kubectl apply -f kantin-ingress.yaml"
-                    
-                    // Memastikan Pod terupdate dengan image terbaru
-                    sh "kubectl rollout restart deployment backend-kantin"
-                    sh "kubectl rollout restart deployment frontend-kantin"
+                    script {
+                        if (isUnix()) {
+                            sh "kubectl apply -f kantin-k8s.yaml"
+                            sh "kubectl apply -f kantin-ingress.yaml"
+                            sh "kubectl rollout restart deployment backend-kantin"
+                            sh "kubectl rollout restart deployment frontend-kantin"
+                        } else {
+                            bat "kubectl apply -f kantin-k8s.yaml"
+                            bat "kubectl apply -f kantin-ingress.yaml"
+                            bat "kubectl rollout restart deployment backend-kantin"
+                            bat "kubectl rollout restart deployment frontend-kantin"
+                        }
+                    }
                 }
             }
         }
