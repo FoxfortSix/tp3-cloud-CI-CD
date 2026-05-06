@@ -35,16 +35,21 @@ pipeline {
         }
         stage('Deploy ke Azure AKS') {
             steps {
-                // Menggunakan withCredentials tipe 'file' (pengganti withKubeConfig)
                 withCredentials([file(credentialsId: 'aks-config', variable: 'KUBECONFIG_FILE')]) {
                     script {
-                        def shellCmd = isUnix() ? 'sh' : 'bat'
-                        // Mengatur environment variable KUBECONFIG secara eksplisit untuk kubectl
+                        // Mengatur environment variable KUBECONFIG secara eksplisit
                         withEnv(["KUBECONFIG=${KUBECONFIG_FILE}"]) {
-                            ${shellCmd} "kubectl apply -f kantin-k8s.yaml"
-                            ${shellCmd} "kubectl apply -f kantin-ingress.yaml"
-                            ${shellCmd} "kubectl rollout restart deployment backend-kantin"
-                            ${shellCmd} "kubectl rollout restart deployment frontend-kantin"
+                            if (isUnix()) {
+                                sh "kubectl apply -f kantin-k8s.yaml"
+                                sh "kubectl apply -f kantin-ingress.yaml"
+                                sh "kubectl rollout restart deployment backend-kantin"
+                                sh "kubectl rollout restart deployment frontend-kantin"
+                            } else {
+                                bat "kubectl apply -f kantin-k8s.yaml"
+                                bat "kubectl apply -f kantin-ingress.yaml"
+                                bat "kubectl rollout restart deployment backend-kantin"
+                                bat "kubectl rollout restart deployment frontend-kantin"
+                            }
                         }
                     }
                 }
